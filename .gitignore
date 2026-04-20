@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+client/.env
+server/.env
+
+# Production Builds
+dist/
+dist-ssr/
+build/
+client/dist/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / IDE
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Server Specific
+server/uploads/*
+!server/uploads/.gitkeep

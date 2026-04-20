@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #FFFFFF;
+    --bg-dark: #001A3D;
+    --accent: #1D4ED8;  /* Steel Blue */
+    --accent-light: #0EA5E9;
+    --text-main: #0F172A;
+    --text-muted: #64748B;
+    --font-heading: 'Outfit', 'Inter', sans-serif;
+  }
+
+  body {
+    @apply font-sans bg-white text-slate-900 antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+@layer components {
+  .btn-bold {
+    @apply px-8 py-3.5 bg-[#1D4ED8] text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all duration-300 shadow-xl shadow-blue-200/50 active:scale-95 flex items-center gap-2;
+  }
+  
+  .btn-bold-outline {
+    @apply px-8 py-3.5 border-2 border-slate-200 text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all duration-300 active:scale-95 flex items-center gap-2;
+  }
+
+  .section-padding {
+    @apply py-20 px-6 md:px-12 lg:px-24;
+  }
+
+  .card-soft {
+    @apply p-8 rounded-[2rem] transition-all duration-500 border-2 border-transparent;
+  }
+
+  .bg-card-blue { @apply bg-[#EFF6FF]; }
+  .bg-card-green { @apply bg-[#ECFDF5]; }
+  .bg-card-cyan { @apply bg-[#ECFEFF]; }
+  .bg-card-emerald { @apply bg-[#F1FDF4]; }
+}
+
+/* Custom Utilities */
+.text-outline {
+  -webkit-text-stroke: 1px black;
+  color: transparent;
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-cyan-500;
+}
