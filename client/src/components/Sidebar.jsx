@@ -1,6 +1,10 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import axios from 'axios';
+import { ServerUrl } from '../App';
+import { setUserData } from '../redux/userSlice';
 import { 
   LayoutDashboard, 
   Target, 
@@ -9,7 +13,7 @@ import {
   BarChart3, 
   Bookmark, 
   FileText, 
-  Settings,
+  User,
   Zap,
   LogOut
 } from 'lucide-react';
@@ -25,33 +29,40 @@ const menuItems = [
 const secondaryItems = [
   { id: 'bookmarks', name: 'Bookmarks', icon: Bookmark, path: '#' },
   { id: 'resume', name: 'Resume', icon: FileText, path: '/career-suite?tab=resume' },
-  { id: 'settings', name: 'Settings', icon: Settings, path: '/settings' },
+  { id: 'profile', name: 'Account Profile', icon: User, path: '/profile' },
 ];
 
-function Sidebar() {
+function Sidebar({ isOpen, setIsOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
+
+  const handleLogout = async () => {
+    try {
+      await axios.get(ServerUrl + "/api/auth/logout", { withCredentials: true });
+      dispatch(setUserData(null));
+      navigate("/");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const isActive = (itemPath) => {
     const currentPath = location.pathname;
     const currentSearch = location.search;
     
-    // For specific tabs in Career Suite
     if (itemPath.includes('?tab=')) {
       return (currentPath + currentSearch) === itemPath;
     }
     
-    // For Dashboard
     if (itemPath === '/dashboard') {
       return currentPath === '/dashboard';
     }
     
-    // For Analytics (History & Reports)
     if (itemPath === '/history') {
       return currentPath.startsWith('/history') || currentPath.startsWith('/report');
     }
     
-    // For Interview Room
     if (itemPath === '/interview') {
       return currentPath.startsWith('/interview');
     }
@@ -60,64 +71,96 @@ function Sidebar() {
   };
 
   return (
-    <div className="w-72 h-screen bg-white border-r border-gray-100 flex flex-col sticky top-0 overflow-y-auto">
-      {/* Logo */}
-      <div className="p-8 flex items-center gap-3">
-        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-          <Zap className="text-white fill-white" size={20} />
-        </div>
-        <span className="text-xl font-[900] tracking-tighter text-slate-900">InterviewIQ</span>
-      </div>
+    <>
+      {/* Backdrop for mobile */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsOpen(false)}
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[1000] lg:hidden"
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Main Menu */}
-      <nav className="flex-1 px-4 space-y-1">
-        <p className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 mt-4">Main Menu</p>
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => navigate(item.path)}
-            className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-300 group ${
-              isActive(item.path)
-                ? 'bg-blue-50 text-blue-600 font-bold'
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-            }`}
+      <motion.div 
+        className={`fixed inset-y-0 left-0 z-[1001] w-72 bg-white flex flex-col transition-all duration-300 lg:translate-x-0 lg:static border-r border-slate-200 ${isOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'}`}
+      >
+        {/* Logo & Close Button */}
+        <div className="p-8 flex items-center justify-between">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+            <div className="w-9 h-9 bg-slate-900 rounded-lg flex items-center justify-center shadow-sm">
+              <Zap className="text-white fill-white" size={16} />
+            </div>
+            <span className="text-xl font-extrabold tracking-tight text-slate-900">InterviewIQ</span>
+          </div>
+          <button 
+            onClick={() => setIsOpen(false)}
+            className="p-2 text-slate-400 hover:text-slate-900 lg:hidden"
           >
-            <item.icon size={20} className={isActive(item.path) ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'} />
-            <span className="text-sm font-bold tracking-tight">{item.name}</span>
-            {isActive(item.path) && (
-              <motion.div 
-                layoutId="activeTab"
-                className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600"
-              />
-            )}
-          </button>
-        ))}
-
-        <p className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 mt-10">Account</p>
-        {secondaryItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => navigate(item.path)}
-            className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-300 group text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-          >
-            <item.icon size={20} className="text-slate-400 group-hover:text-slate-600" />
-            <span className="text-sm font-bold tracking-tight">{item.name}</span>
-          </button>
-        ))}
-      </nav>
-
-      {/* Pro Banner */}
-      <div className="p-6">
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-20 h-20 bg-blue-500/20 rounded-full blur-2xl group-hover:bg-blue-500/30 transition-all duration-500" />
-          <p className="text-white font-black text-sm mb-1 tracking-tight">Pro Upgrade</p>
-          <p className="text-slate-400 text-[10px] font-bold mb-4 leading-relaxed">Unlock unlimited AI interviews and high-priority parsing.</p>
-          <button className="w-full py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black shadow-lg shadow-blue-900/20 hover:bg-blue-500 transition-colors">
-            Get Pro Access
+            <LogOut size={18} className="rotate-180" />
           </button>
         </div>
-      </div>
-    </div>
+
+        {/* Main Menu */}
+        <nav className="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
+          <p className="px-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 mt-2">Platform</p>
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                navigate(item.path);
+                if (window.innerWidth < 1024) setIsOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                isActive(item.path)
+                  ? 'bg-slate-900 text-white shadow-md'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <item.icon size={18} className={isActive(item.path) ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'} />
+              <span className="text-sm font-semibold">{item.name}</span>
+            </button>
+          ))}
+
+          <p className="px-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 mt-8">Resources</p>
+          {secondaryItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                navigate(item.path);
+                if (window.innerWidth < 1024) setIsOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            >
+              <item.icon size={18} className="text-slate-400 group-hover:text-slate-600" />
+              <span className="text-sm font-semibold">{item.name}</span>
+            </button>
+          ))}
+
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-rose-600 hover:bg-rose-50 mt-4"
+          >
+            <LogOut size={18} />
+            <span className="text-sm font-semibold">Sign Out</span>
+          </button>
+        </nav>
+
+        {/* Pro Banner */}
+        <div className="p-6">
+          <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+            <p className="text-slate-900 font-bold text-xs mb-1">Upgrade to Pro</p>
+            <p className="text-slate-500 text-[11px] mb-4 leading-relaxed">Access advanced AI insights and priority processing.</p>
+            <button className="w-full py-2.5 bg-white border border-slate-200 text-slate-900 rounded-lg text-xs font-bold hover:bg-slate-50 transition-colors">
+              View Plans
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </>
   );
 }
 

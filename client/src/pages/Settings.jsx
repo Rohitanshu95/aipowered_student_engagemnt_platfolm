@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -53,6 +53,33 @@ function Settings() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+      setUploading(true);
+      const res = await axios.post(`${ServerUrl}/api/user/update-avatar`, formData, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (res.data.success) {
+        dispatch(setUserData(res.data.user));
+      }
+    } catch (err) {
+      console.error("Avatar upload failed:", err);
+      alert("Failed to upload avatar. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -79,7 +106,7 @@ function Settings() {
             <Sparkles size={16} />
             Command Center
           </motion.div>
-          <h1 className="text-5xl font-[900] tracking-tighter text-slate-900 mb-2">Account Settings.</h1>
+          <h1 className="text-5xl font-[900] tracking-tighter text-slate-900 mb-2">Account Profile.</h1>
           <p className="text-slate-500 font-bold text-sm tracking-tight">
             Manage your professional identity and platform preferences.
           </p>
@@ -90,10 +117,34 @@ function Settings() {
           <div className="absolute right-0 top-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl -mr-32 -mt-32" />
           <div className="relative flex flex-col md:flex-row items-center gap-8">
             <div className="relative">
-              <div className="w-24 h-24 bg-blue-600 rounded-3xl flex items-center justify-center text-3xl font-black text-white shadow-xl shadow-blue-900/50">
-                {userData?.name?.charAt(0) || 'U'}
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleAvatarUpload} 
+                className="hidden" 
+                accept="image/*"
+              />
+              <div className="w-24 h-24 bg-blue-600 rounded-3xl flex items-center justify-center text-3xl font-black text-white shadow-xl shadow-blue-900/50 overflow-hidden relative">
+                {userData?.avatar ? (
+                  <img 
+                    src={`${ServerUrl}${userData.avatar}`} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  userData?.name?.charAt(0) || 'U'
+                )}
+                {uploading && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
               </div>
-              <button className="absolute -bottom-2 -right-2 p-2 bg-white rounded-xl shadow-lg border border-slate-100 text-slate-900 hover:text-blue-600 transition-all">
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="absolute -bottom-2 -right-2 p-2 bg-white rounded-xl shadow-lg border border-slate-100 text-slate-900 hover:text-blue-600 transition-all disabled:opacity-50"
+              >
                 <Camera size={16} />
               </button>
             </div>

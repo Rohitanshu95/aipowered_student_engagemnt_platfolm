@@ -3,6 +3,9 @@ import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import { askAi } from "../services/openRouter.service.js";
 import User from "../models/user.model.js";
 import Interview from "../models/interview.model.js";
+import Assessment from "../models/assessment.model.js";
+import Roadmap from "../models/roadmap.model.js";
+import UserTask from "../models/task.model.js";
 
 export const analyzeResume = async (req, res) => {
   try {
@@ -94,17 +97,16 @@ export const generateQuestion = async (req, res) => {
       return res.status(400).json({ message: "Role, Experience and Mode are required." })
     }
 
-    const user = await User.findById(req.userId)
+    // ATOMIC CREDIT CHECK AND DEDUCTION (1 Hit)
+    const user = await User.findOneAndUpdate(
+      { _id: req.userId, credits: { $gte: 50 } },
+      { $inc: { credits: -50 } },
+      { new: true }
+    );
 
     if (!user) {
-      return res.status(404).json({
-        message: "User not found."
-      });
-    }
-
-    if (user.credits < 50) {
       return res.status(400).json({
-        message: "Not enough credits. Minimum 50 required."
+        message: "Insufficient credits or user not found. Minimum 50 required."
       });
     }
 
@@ -195,8 +197,7 @@ Make questions based on the candidate’s role, experience,interviewMode, projec
       });
     }
 
-    user.credits -= 50;
-    await user.save();
+    // Credits already deducted atomically above
 
     const interview = await Interview.create({
       userId: user._id,
@@ -457,15 +458,22 @@ export const getInterviewReport = async (req,res) => {
 
 export const getAnalytics = async (req, res) => {
   try {
-    const interviews = await Interview.find({ userId: req.userId, status: "completed" });
-    
+    // PARALLEL DATA FETCHING (Reduced Response Time)
+    const [user, interviews, assessments, roadmaps, allTasks] = await Promise.all([
+      User.findById(req.userId),
+      Interview.find({ userId: req.userId, status: "completed" }).sort({ createdAt: -1 }),
+      Assessment.find({ userId: req.userId, status: "Completed" }).sort({ createdAt: -1 }),
+      Roadmap.find({ userId: req.userId }),
+      UserTask.find({ userId: req.userId })
+    ]);
+
+    // ============ 1. INTERVIEW STATS (REAL) ============
     const mocksTaken = interviews.length;
     const totalScore = interviews.reduce((acc, curr) => acc + (curr.finalScore || 0), 0);
     const avgScore = mocksTaken > 0 ? (totalScore / mocksTaken).toFixed(1) : 0;
 
     // Aggregate skill metrics (Confidence, Communication, Correctness)
     let totalConf = 0, totalComm = 0, totalCorr = 0, qCount = 0;
-    
     interviews.forEach(interview => {
       interview.questions.forEach(q => {
         totalConf += q.confidence || 0;
@@ -474,36 +482,154 @@ export const getAnalytics = async (req, res) => {
         qCount++;
       });
     });
-
-    const avgConf = qCount > 0 ? (totalConf / qCount) * 10 : 0; // Scale to 100
+    const avgConf = qCount > 0 ? (totalConf / qCount) * 10 : 0;
     const avgComm = qCount > 0 ? (totalComm / qCount) * 10 : 0;
     const avgCorr = qCount > 0 ? (totalCorr / qCount) * 10 : 0;
 
+    // ============ 2. REAL ATS SCORE ============
+    // Check if user has a resume uploaded — if yes, we have a real ATS score from the last scan
+    let atsScore = "N/A";
+    if (user?.resumeText) {
+      // Last ATS check is stored on user profile; we look at latest data
+      atsScore = "Upload resume";
+    }
+    // We don't store the ATS score persistently yet, so show profile completeness instead
+    // Calculate profile completeness as a proxy ATS readiness score
+    let profilePoints = 0;
+    if (user?.name) profilePoints += 10;
+    if (user?.email) profilePoints += 10;
+    if (user?.resumeText) profilePoints += 25;
+    if (user?.skills?.length > 0) profilePoints += 15;
+    if (user?.experience?.length > 0) profilePoints += 15;
+    if (user?.education?.length > 0) profilePoints += 10;
+    if (user?.profileBrief) profilePoints += 15;
+    atsScore = `${profilePoints}%`;
+
+    // ============ 3. ASSESSMENTS (REAL) ============
+    const assessments = await Assessment.find({ userId: req.userId, status: "Completed" }).sort({ createdAt: -1 });
+    const totalAssessments = assessments.length;
+    const avgAssessmentScore = totalAssessments > 0
+      ? Math.round(assessments.reduce((acc, a) => acc + ((a.score / a.totalQuestions) * 100), 0) / totalAssessments)
+      : 0;
+
+    // ============ 4. ROADMAP PROGRESS (REAL) ============
+    const roadmaps = await Roadmap.find({ userId: req.userId });
+    const activeRoadmaps = roadmaps.filter(r => r.status === "Active").length;
+    const allTasks = await UserTask.find({ userId: req.userId });
+    const completedTasks = allTasks.filter(t => t.status === "Completed").length;
+    const totalTasks = allTasks.length;
+    const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    // ============ 5. REAL SKILLS COUNT ============
+    const skillsCount = user?.skills?.length || 0;
+
+    // ============ 6. RADAR DATA (REAL from interviews) ============
     const radarData = [
       { subject: 'Confidence', A: Math.round(avgConf), fullMark: 100 },
       { subject: 'Communication', A: Math.round(avgComm), fullMark: 100 },
       { subject: 'Technical', A: Math.round(avgCorr), fullMark: 100 },
-      { subject: 'Accuracy', A: Math.round(avgCorr * 0.9 + 5), fullMark: 100 },
-      { subject: 'Engagement', A: Math.round(avgComm * 0.85 + 10), fullMark: 100 },
+      { subject: 'Assessment', A: avgAssessmentScore, fullMark: 100 },
+      { subject: 'Task Progress', A: taskCompletionRate, fullMark: 100 },
     ];
 
-    const recentActivity = interviews.slice(0, 5).map(i => ({
+    // ============ 7. RECENT ACTIVITY (REAL — merged from interviews + assessments) ============
+    const recentInterviews = interviews.slice(0, 3).map(i => ({
       id: i._id,
       title: `${i.role} Interview (${i.mode})`,
-      score: `${Math.round(i.finalScore)}%`,
+      score: `${Math.round(i.finalScore)}/10`,
       time: new Date(i.createdAt).toLocaleDateString(),
-      status: i.finalScore > 70 ? 'Good' : 'Moderate'
+      type: 'interview',
+      status: i.finalScore > 7 ? 'Good' : 'Moderate'
     }));
+
+    const recentAssessments = assessments.slice(0, 3).map(a => ({
+      id: a._id,
+      title: `Assessment: ${a.jobDesc?.slice(0, 40)}...`,
+      score: `${a.score}/${a.totalQuestions}`,
+      time: new Date(a.createdAt).toLocaleDateString(),
+      type: 'assessment',
+      status: a.feedback
+    }));
+
+    // Merge and sort by time
+    const recentActivity = [...recentInterviews, ...recentAssessments]
+      .sort((a, b) => new Date(b.time) - new Date(a.time))
+      .slice(0, 5);
+
+    // ============ 8. SCORE TREND (REAL — interview scores over time) ============
+    const scoreTrend = interviews.slice().reverse().map(i => ({
+      date: new Date(i.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      score: Math.round(i.finalScore * 10), // scale to 100
+      role: i.role
+    }));
+
+    // ============ 9. PROFILE SUMMARY ============
+    const profileSummary = {
+      name: user?.name || "User",
+      email: user?.email,
+      resumeUploaded: !!user?.resumeText,
+      resumeName: user?.resumeName || null,
+      skills: user?.skills || [],
+      profileBrief: user?.profileBrief || null,
+      experienceCount: user?.experience?.length || 0,
+      educationCount: user?.education?.length || 0,
+      credits: user?.credits || 0
+    };
+
+    // ============ 10. NEURAL GUIDANCE (AI Advice) ============
+    let profileGuidance = "Analyzing your profile for the perfect career sequence...";
+    try {
+      const guidancePrompt = `
+      You are InterviewIQ's Neural Career Advisor. 
+      Analyze the following user stats and profile to provide ONE high-impact, professional "Perfect Answer" for their next career move.
+      
+      STATS:
+      - Mocks Taken: ${mocksTaken}
+      - Avg Mock Score: ${avgScore}%
+      - ATS Readiness: ${atsScore}
+      - Skills Count: ${skillsCount}
+      - Profile Completeness: ${profilePoints}%
+      - Task Completion: ${taskCompletionRate}%
+      
+      USER CONTEXT:
+      ${user?.profileBrief || "New user"}
+      
+      TASK:
+      Generate a 2-sentence "Neural Guidance" that sounds extremely premium and fintech-aligned. 
+      The first sentence should highlight a key strength or progress.
+      The second sentence should give a specific, actionable "Perfect Step" (e.g., "Based on your Node.js expertise, your next sequence should focus on High-Level System Design mocks").
+      
+      TONE: Executive, precise, data-driven.
+      `;
+      
+      const aiResponse = await askAi([
+        { role: "system", content: "You are a professional career growth engine. Return ONLY the guidance text." },
+        { role: "user", content: guidancePrompt }
+      ]);
+      profileGuidance = aiResponse?.trim() || profileGuidance;
+    } catch (err) {
+      console.error("Guidance Generation Error:", err);
+    }
 
     res.json({
       stats: {
         mocksTaken,
         avgScore: `${avgScore}%`,
-        skillsImproved: Math.floor(mocksTaken * 0.7), // Mock calculation for now
-        atsScore: "85%" // Placeholder until ATS scoring logic is added
+        skillsCount,
+        atsScore,
+        assessmentsTaken: totalAssessments,
+        avgAssessmentScore: `${avgAssessmentScore}%`,
+        activeRoadmaps,
+        taskCompletionRate: `${taskCompletionRate}%`,
+        completedTasks,
+        totalTasks,
+        profileCompleteness: profilePoints
       },
       radarData,
-      recentActivity
+      recentActivity,
+      scoreTrend,
+      profileSummary,
+      profileGuidance
     });
   } catch (error) {
     return res.status(500).json({ message: `failed to get analytics ${error}` });

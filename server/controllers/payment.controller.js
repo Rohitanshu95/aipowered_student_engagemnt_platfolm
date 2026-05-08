@@ -6,32 +6,51 @@ import crypto from "crypto"
 export const createOrder = async (req,res) => {
     try {
         const {planId, amount, credits} = req.body;
-          if (!amount || !credits) {
-      return res.status(400).json({ message: "Invalid plan data" });
-    }
+        
+        if (!amount || !credits) {
+            return res.status(400).json({ message: "Invalid plan data" });
+        }
 
-     const options = {
-      amount: amount * 100, // convert to paise
-      currency: "INR",
-      receipt: `receipt_${Date.now()}`,
-    };
+        const parsedAmount = parseInt(amount, 10);
+        if (isNaN(parsedAmount)) {
+            return res.status(400).json({ message: "Invalid amount format" });
+        }
 
-    const order = await razorpay.orders.create(options)
+        // Verify Razorpay setup
+        if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+            console.error("Razorpay keys are missing in environment variables");
+            return res.status(500).json({ message: "Payment gateway configuration error" });
+        }
 
-     await Payment.create({
-      userId: req.userId,
-      planId,
-      amount,
-      credits,
-      razorpayOrderId: order.id,
-      status: "created",
-    });
+        const options = {
+            amount: parsedAmount * 100, // convert to paise
+            currency: "INR",
+            receipt: `receipt_${Date.now()}`,
+        };
 
-    return res.json(order);
+        const order = await razorpay.orders.create(options);
 
-    
+        if (!order || !order.id) {
+            throw new Error("Failed to generate Razorpay order ID");
+        }
+
+        await Payment.create({
+            userId: req.userId,
+            planId,
+            amount: parsedAmount,
+            credits,
+            razorpayOrderId: order.id,
+            status: "created",
+        });
+
+        return res.json(order);
+
     } catch (error) {
-         return res.status(500).json({message:`failed to create Razorpay order ${error}`})
+        console.error("Razorpay Order Creation Error:", error);
+        return res.status(500).json({
+            message: "Internal Server Error during order creation",
+            error: error.message || error
+        });
     }
 }
 

@@ -6,7 +6,7 @@ import { HiOutlineLogout } from "react-icons/hi";
 import { FaUserAstronaut } from "react-icons/fa";
 import { Sparkles } from "lucide-react";
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { ServerUrl } from '../App';
 import { setUserData } from '../redux/userSlice';
@@ -33,25 +33,28 @@ function Navbar() {
     }
 
   return (
-    <div className='fixed top-0 left-0 w-full z-[1000] px-6 py-8 flex justify-center pointer-events-none'>
+    <div className='fixed top-0 left-0 w-full z-[1000] px-4 sm:px-10 py-6 flex justify-center pointer-events-none'>
         <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className='w-full max-w-[1920px] bg-white/80 backdrop-blur-xl rounded-[32px] border border-gray-100 px-8 py-5 flex justify-between items-center shadow-2xl shadow-black/5 pointer-events-auto'
+            className='w-full max-w-7xl bg-white/90 backdrop-blur-xl rounded-2xl border border-slate-200 px-4 sm:px-8 py-3.5 flex justify-between items-center shadow-lg pointer-events-auto'
         >
             {/* Logo Section */}
             <div 
-                className='flex items-center gap-3 cursor-pointer group'
+                className='flex items-center gap-3 cursor-pointer group shrink-0'
                 onClick={() => navigate("/")}
             >
-                <div className='bg-black text-white p-2.5 rounded-xl group-hover:bg-blue-600 transition-colors duration-500'>
-                    <BsRobot size={22}/>
+                <div className='bg-slate-900 text-white p-2.5 rounded-lg group-hover:bg-blue-600 transition-all shadow-sm'>
+                    <BsRobot size={20} />
                 </div>
-                <h1 className='text-xl font-black tracking-tighter text-black'>InterviewIQ</h1>
+                <div className="flex flex-col">
+                    <h1 className='text-xl font-extrabold tracking-tight text-slate-900 leading-none'>InterviewIQ</h1>
+                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1 hidden sm:block">Professional System</span>
+                </div>
             </div>
 
             {/* Navigation Actions */}
-            <div className='flex items-center gap-4'>
+            <div className='flex items-center gap-2 sm:gap-4'>
                 <button 
                     onClick={() => {
                         if(!userData){
@@ -60,13 +63,13 @@ function Navbar() {
                         }
                         navigate("/career-suite")
                     }}
-                    className='hidden md:flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-gray-50 text-gray-900 font-bold text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-all duration-300'
+                    className='hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-lg bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-all shadow-sm'
                 >
-                    <Sparkles size={14} className="text-blue-500" />
+                    <Sparkles size={14} />
                     Career Suite
                 </button>
 
-                <div className='h-8 w-px bg-gray-100 mx-2 hidden sm:block'></div>
+                <div className='h-6 w-px bg-slate-200 mx-1 hidden sm:block'></div>
 
                 {/* Credits Display */}
                 <div className='relative'>
@@ -76,10 +79,10 @@ function Navbar() {
                             setShowCreditPopup(!showCreditPopup);
                             setShowUserPopup(false);
                         }}
-                        className='flex items-center gap-2.5 px-5 py-2.5 rounded-2xl bg-blue-50 text-blue-700 font-black text-xs uppercase tracking-widest border border-blue-100 hover:bg-blue-100 transition-all'
+                        className='flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-50 text-slate-700 font-bold text-xs border border-slate-200 hover:bg-slate-100 transition-all'
                     >
-                        <BsCoin size={18}/>
-                        {userData?.credits || 0}
+                        <BsCoin size={16} className="text-amber-500" />
+                        <span>{userData?.credits || 0}</span>
                     </button>
                     
                     <AnimatePresence>
@@ -88,15 +91,15 @@ function Navbar() {
                                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                                className='absolute right-0 mt-4 w-72 bg-white shadow-2xl border border-gray-100 rounded-3xl p-6 z-50'
+                                className='absolute right-0 mt-4 w-72 bg-white shadow-xl border border-slate-200 rounded-2xl p-6 z-50'
                             >
-                                <div className='text-xs font-black text-gray-400 uppercase tracking-widest mb-4'>Token Balance</div>
-                                <p className='text-sm text-gray-600 mb-6 font-bold leading-relaxed'>Elevate your performance with premium AI credits.</p>
+                                <div className='text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3'>System Tokens</div>
+                                <p className='text-sm text-slate-600 mb-5 font-medium leading-relaxed'>Boost your neural processing capacity with enterprise credits.</p>
                                 <button 
                                     onClick={() => navigate("/pricing")}
-                                    className='w-full py-4 bg-black text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-gray-200 hover:bg-blue-600 transition-all'
+                                    className='w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all active:scale-[0.98]'
                                 >
-                                    Boost My Credits
+                                    Purchase Tokens
                                 </button>
                             </motion.div>
                         )}
@@ -105,20 +108,29 @@ function Navbar() {
 
                 {/* Account Actions */}
                 <div className='relative'>
-                    <button
-                        onClick={() => {
-                            if(!userData) { setShowAuth(true); return; }
-                            setShowUserPopup(!showUserPopup);
-                            setShowCreditPopup(false);
-                        }}
-                        className='h-12 w-12 bg-black text-white rounded-2xl flex items-center justify-center hover:scale-105 transition-all shadow-lg active:scale-95'
-                    >
-                        {userData ? (
-                            <span className='font-black text-lg'>{userData?.name.slice(0,1).toUpperCase()}</span>
-                        ) : (
-                            <FaUserAstronaut size={18}/>
-                        )}
-                    </button>
+                    {userData ? (
+                        <Link
+                            to="/profile"
+                            className='h-10 w-10 sm:h-11 sm:w-11 bg-slate-900 text-white rounded-lg flex items-center justify-center hover:bg-slate-800 transition-all shadow-sm active:scale-[0.98] shrink-0 overflow-hidden'
+                        >
+                            {userData?.avatar ? (
+                                <img 
+                                    src={`${ServerUrl}${userData.avatar}`} 
+                                    alt="Profile" 
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <span className='font-bold text-sm sm:text-base'>{userData?.name.slice(0,1).toUpperCase()}</span>
+                            )}
+                        </Link>
+                    ) : (
+                        <button
+                            onClick={() => setShowAuth(true)}
+                            className='h-10 w-10 sm:h-11 sm:w-11 bg-slate-900 text-white rounded-lg flex items-center justify-center hover:bg-slate-800 transition-all shadow-sm active:scale-[0.98] shrink-0'
+                        >
+                            <FaUserAstronaut size={16} />
+                        </button>
+                    )}
 
                     <AnimatePresence>
                         {showUserPopup && (
@@ -126,24 +138,23 @@ function Navbar() {
                                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                                className='absolute right-0 mt-4 w-56 bg-white shadow-2xl border border-gray-100 rounded-3xl p-4 z-50'
+                                className='absolute right-0 mt-4 w-60 bg-white shadow-xl border border-slate-200 rounded-2xl p-4 z-50'
                             >
-                                <div className='px-4 py-3 mb-2'>
-                                    <div className='text-[10px] font-black text-gray-300 uppercase tracking-widest mb-1'>Identity</div>
-                                    <p className='text-sm font-black text-black truncate'>{userData?.name}</p>
+                                <div className='px-4 py-3 mb-2 bg-slate-50 rounded-xl'>
+                                    <div className='text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1'>Identity</div>
+                                    <p className='text-sm font-bold text-slate-900 truncate'>{userData?.name}</p>
                                 </div>
-                                <div className='h-px bg-gray-50 mb-2 mx-4'></div>
                                 <button 
                                     onClick={() => { navigate("/history"); setShowUserPopup(false); }} 
-                                    className='w-full text-left font-black text-[10px] uppercase tracking-widest py-3 px-4 hover:bg-gray-50 rounded-xl text-gray-600 hover:text-black transition-all'
+                                    className='w-full text-left font-bold text-xs py-3 px-4 hover:bg-slate-50 rounded-lg text-slate-600 hover:text-slate-900 transition-all'
                                 >
-                                    Session History
+                                    View History
                                 </button>
                                 <button 
                                     onClick={handleLogout}
-                                    className='w-full text-left font-black text-[10px] uppercase tracking-widest py-3 px-4 flex items-center gap-2 text-red-500 hover:bg-red-50 rounded-xl transition-all'
+                                    className='w-full text-left font-bold text-xs py-3 px-4 flex items-center gap-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-all'
                                 >
-                                    <HiOutlineLogout size={16}/>
+                                    <HiOutlineLogout size={16} />
                                     Sign Out
                                 </button>
                             </motion.div>

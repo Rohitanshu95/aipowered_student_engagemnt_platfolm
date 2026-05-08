@@ -9,9 +9,17 @@ import {
   ChevronRight, 
   Bell,
   Search,
-  Sparkles
+  Sparkles,
+  RefreshCw,
+  Bot
 } from 'lucide-react';
 import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
   Radar, 
   RadarChart, 
   PolarGrid, 
@@ -45,136 +53,152 @@ function DashboardHome() {
     { name: 'ATS Score', value: analytics?.stats?.atsScore || '0%', change: '+2%', color: 'text-emerald-600', icon: Target },
     { name: 'Mocks Taken', value: analytics?.stats?.mocksTaken || '0', change: 'Keep it up!', color: 'text-blue-600', icon: PlayCircle },
     { name: 'Avg. Score', value: analytics?.stats?.avgScore || '0%', change: 'Good Progress', color: 'text-indigo-600', icon: BarChart3 },
-    { name: 'Skills Improved', value: analytics?.stats?.skillsImproved || '0', change: 'This Month', color: 'text-blue-500', icon: Map },
+    { name: 'Skills Count', value: analytics?.stats?.skillsCount || '0', change: 'Active', color: 'text-blue-500', icon: Map },
   ];
 
+  const activities = analytics?.recentActivity || [];
+  const profileGuidance = analytics?.profileGuidance;
   const skillData = analytics?.radarData || [
     { subject: 'Confidence', A: 0, fullMark: 100 },
     { subject: 'Communication', A: 0, fullMark: 100 },
     { subject: 'Technical', A: 0, fullMark: 100 },
+    { subject: 'Assessment', A: 0, fullMark: 100 },
+    { subject: 'Task Progress', A: 0, fullMark: 100 },
   ];
-
-  const activities = analytics?.recentActivity || [];
+  const scoreTrend = analytics?.scoreTrend || [
+    { date: 'Seq 1', score: 30 },
+    { date: 'Seq 2', score: 45 },
+    { date: 'Seq 3', score: 38 },
+    { date: 'Seq 4', score: 62 },
+    { date: 'Seq 5', score: 75 },
+  ];
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
-          <div>
-            <h1 className="text-4xl font-[900] tracking-tighter text-slate-900 mb-2">
-              Welcome back, {userData?.displayName?.split(' ')[0] || 'User'}! 👋
+      <div className="pb-8">
+        {/* Mobile-Centric Welcome */}
+        <div className="mb-8">
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-1">
+              Operational Status
             </h1>
-            <p className="text-slate-500 font-bold text-sm tracking-tight capitalize">
-              Let's continue your professional preparation journey.
+            <p className="text-slate-500 font-medium text-xs">
+              Neural sequence scan complete for {userData?.displayName || 'User'}
             </p>
-          </div>
-          <div className="flex items-center gap-4">
-             <div className="relative group flex-1 md:w-64">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Search resources..."
-                  className="w-full pl-12 pr-4 py-3 bg-white border border-slate-100 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all"
-                />
-             </div>
-             <button className="p-3.5 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-blue-600 hover:border-blue-100 transition-all relative">
-                <Bell size={20} />
-                <div className="absolute right-3 top-3 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
-             </button>
-             <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-200">
-                {userData?.displayName?.charAt(0) || 'U'}
-             </div>
-          </div>
-        </header>
+        </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        {/* AI Guidance Card - Mobile Optimized */}
+        <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        >
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-600" />
+            <div className="p-6">
+                <div className="flex items-center gap-2 text-blue-600 font-bold text-[9px] uppercase tracking-widest mb-3">
+                    <Sparkles size={12} />
+                    Neural Sequence Advisor
+                </div>
+                <h2 className="text-xl font-extrabold text-slate-900 mb-3 tracking-tight">
+                    {loading ? "Analyzing metrics..." : "Strategic Guidance"}
+                </h2>
+                <p className="text-slate-600 text-xs font-medium leading-relaxed mb-6">
+                    {loading ? "System is synthesizing your professional sequence." : profileGuidance}
+                </p>
+                <button 
+                    onClick={() => navigate('/career-suite?tab=prep')}
+                    className="w-full flex items-center justify-center gap-2 py-3.5 bg-slate-900 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition-all active:scale-[0.98]"
+                >
+                    View Roadmap <ChevronRight size={16} />
+                </button>
+            </div>
+        </motion.div>
+
+
+
+        {/* Stats Grid - 2 Columns for Mobile */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
           {stats.map((stat, idx) => (
             <motion.div
               key={stat.name}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              className="bg-white p-6 rounded-[32px] border border-slate-50 shadow-sm shadow-slate-100/50 flex flex-col justify-between group hover:border-blue-100 transition-all"
+              transition={{ delay: 0.05 * idx }}
+              className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"
             >
               <div className="flex items-center justify-between mb-6">
-                 <div className={`p-3 rounded-2xl bg-slate-50 group-hover:bg-blue-50 transition-colors`}>
-                    <stat.icon className={stat.color} size={24} />
+                 <div className="p-2.5 rounded-lg bg-slate-50">
+                    <stat.icon className={stat.color} size={18} />
                  </div>
-                 <span className="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-widest">{stat.change}</span>
+                 <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md uppercase">{stat.change}</span>
               </div>
-              <div>
-                <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1.5">{stat.name}</p>
-                <p className="text-3xl font-[900] tracking-tighter text-slate-900">{stat.value}</p>
-              </div>
+              <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest mb-1">{stat.name}</p>
+              <p className="text-xl font-extrabold text-slate-900">{stat.value}</p>
             </motion.div>
           ))}
         </div>
 
-        {/* Main Sections */}
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Recent Activity */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between px-2">
-              <h3 className="text-xl font-[900] tracking-tighter text-slate-900">Recent Activity</h3>
-              <button className="text-blue-600 text-xs font-black uppercase tracking-widest flex items-center gap-1.5 hover:gap-3 transition-all">
-                View All <ChevronRight size={14} />
-              </button>
-            </div>
-            
-            <div className="bg-white rounded-[40px] border border-slate-50 shadow-sm shadow-slate-100/50 p-4 space-y-2">
-              {activities.map((activity) => (
-                <div key={activity.id} className="flex items-center gap-4 p-4 rounded-[28px] hover:bg-slate-50 transition-all group">
-                   <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center group-hover:bg-white transition-colors">
-                      <PlayCircle className="text-slate-400" size={20} />
-                   </div>
-                   <div className="flex-1">
-                      <p className="text-sm font-black text-slate-900 tracking-tight mb-0.5">{activity.title}</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Score: <span className="text-blue-600">{activity.score}</span> • {activity.time}</p>
-                   </div>
-                   <button className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">
-                      View
-                   </button>
-                </div>
-              ))}
-            </div>
+        {/* Recent Activity */}
+        <div className="space-y-4 mb-8">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">System Log</h3>
+            <button className="text-blue-600 text-[10px] font-bold uppercase tracking-widest">
+              Full Archive
+            </button>
           </div>
+          
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            {activities.length > 0 ? activities.slice(0, 3).map((activity, idx) => (
+              <div key={activity.id} className={`flex items-center gap-4 p-4 active:bg-slate-50 transition-all ${idx !== activities.slice(0, 3).length - 1 ? 'border-b border-slate-50' : ''}`}>
+                 <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center shrink-0">
+                    <PlayCircle className="text-slate-400" size={18} />
+                 </div>
+                 <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-900 mb-0.5 truncate">{activity.title}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-blue-600 font-bold uppercase">Score: {activity.score}</span>
+                      <span className="text-[9px] text-slate-400 font-medium">{activity.time}</span>
+                    </div>
+                 </div>
+              </div>
+            )) : (
+              <div className="py-12 text-center">
+                <p className="text-slate-300 font-bold text-[10px] uppercase tracking-widest">No activity log</p>
+              </div>
+            )}
+          </div>
+        </div>
 
-          {/* Radar Chart */}
-          <div className="space-y-6">
-             <h3 className="text-xl font-[900] tracking-tighter text-slate-900 px-2 flex items-center gap-2">
-                <Sparkles className="text-blue-600" size={18} />
-                Skill Strength
-             </h3>
-             <div className="bg-white rounded-[40px] border border-slate-50 shadow-sm shadow-slate-100/50 p-8 h-[400px] w-full relative">
-                {!loading && (
-                  <div className="absolute inset-8">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart cx="50%" cy="50%" outerRadius="80%" data={skillData}>
-                        <PolarGrid stroke="#f1f5f9" />
-                        <PolarAngleAxis 
-                          dataKey="subject" 
-                          tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 900 }} 
-                        />
-                        <Radar
-                          name="User"
-                          dataKey="A"
-                          stroke="#2563eb"
-                          fill="#2563eb"
-                          fillOpacity={0.1}
-                        />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-                {loading && (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="animate-pulse w-32 h-32 bg-slate-50 rounded-full" />
-                  </div>
-                )}
-             </div>
-          </div>
+        {/* Neural Matrix - Radar Chart (Primary Analytics) */}
+        <div className="space-y-4">
+           <h3 className="text-lg font-extrabold text-slate-900 px-1 tracking-tight">Neural Matrix</h3>
+           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 h-[320px] w-full relative">
+              {!loading && (
+                <div className="absolute inset-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="75%" data={skillData}>
+                      <PolarGrid stroke="#f1f5f9" />
+                      <PolarAngleAxis 
+                        dataKey="subject" 
+                        tick={{ fill: '#94a3b8', fontSize: 8, fontWeight: 700 }} 
+                      />
+                      <Radar
+                        name="User"
+                        dataKey="A"
+                        stroke="#0F172A"
+                        fill="#0F172A"
+                        fillOpacity={0.05}
+                        strokeWidth={2}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              {loading && (
+                <div className="w-full h-full flex items-center justify-center">
+                    <RefreshCw size={20} className="text-slate-200 animate-spin" />
+                </div>
+              )}
+           </div>
         </div>
       </div>
     </DashboardLayout>

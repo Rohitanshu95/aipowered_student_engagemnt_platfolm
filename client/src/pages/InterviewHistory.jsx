@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import { ServerUrl } from '../App';
+import { motion } from 'framer-motion';
 import { PlayCircle, Calendar, Target, ChevronRight } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
 
@@ -26,84 +27,92 @@ function InterviewHistory() {
 
     return (
         <DashboardLayout>
-            <div className="max-w-5xl mx-auto pb-12">
-                <div className="mb-10 px-2">
-                    <h1 className="text-3xl font-[900] tracking-tighter text-slate-900 mb-2">
+            <div className="pb-12 px-1">
+                <header className="mb-10 text-center sm:text-left">
+                    <motion.div 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="inline-flex items-center gap-2 text-blue-600 font-bold text-[9px] uppercase tracking-widest mb-2"
+                    >
+                        <Target size={12} />
+                        Sequence Archive
+                    </motion.div>
+                    <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 mb-2">
                         Interview History
                     </h1>
-                    <p className="text-slate-500 font-bold text-sm tracking-tight">
-                        Review your past performances and skill diagnostics.
+                    <p className="text-slate-500 font-medium text-xs">
+                        Review your historical performance diagnostics.
                     </p>
-                </div>
+                </header>
 
                 {loading ? (
-                    <div className="bg-white p-12 rounded-[40px] border border-slate-50 text-center">
+                    <div className="bg-white p-12 rounded-3xl border border-slate-100 text-center shadow-sm">
                         <div className="animate-pulse flex flex-col items-center">
-                            <div className="w-12 h-12 bg-slate-100 rounded-2xl mb-4" />
-                            <div className="h-4 w-48 bg-slate-50 rounded-full" />
+                            <div className="w-12 h-12 bg-slate-50 rounded-2xl mb-4" />
+                            <div className="h-2 w-32 bg-slate-50 rounded-full" />
                         </div>
                     </div>
                 ) : interviews.length === 0 ? (
-                    <div className="bg-white p-12 rounded-[40px] border border-slate-50 text-center shadow-sm shadow-slate-100/50">
-                        <PlayCircle className="mx-auto text-slate-200 mb-4" size={48} />
-                        <p className="text-slate-400 font-bold text-sm tracking-tight mb-6">
-                            No interviews found. Start your first session to see analytics.
+                    <div className="bg-white p-12 rounded-3xl border border-slate-100 text-center shadow-sm">
+                        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <PlayCircle className="text-slate-200" size={32} />
+                        </div>
+                        <p className="text-slate-500 font-bold text-[10px] uppercase tracking-widest mb-8">
+                            No historical data found.
                         </p>
                         <button 
                             onClick={() => navigate('/interview')}
-                            className="px-8 py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-500 transition-colors"
+                            className="w-full sm:w-auto px-10 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
                         >
-                            Start First Mock
+                            Initialize Sequence
                         </button>
                     </div>
                 ) : (
                     <div className="grid gap-4">
                         {interviews.map((item) => (
-                            <div 
+                            <motion.div 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
                                 key={item._id}
                                 onClick={() => navigate(`/report/${item._id}`)}
-                                className="bg-white p-6 rounded-[32px] border border-slate-50 shadow-sm shadow-slate-100/50 hover:border-blue-100 transition-all cursor-pointer group flex items-center gap-6"
+                                className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-sm hover:border-blue-600/30 transition-all cursor-pointer group flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6"
                             >
-                                <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                                    <Target className="text-slate-400 group-hover:text-blue-600 transition-colors" size={24} />
-                                </div>
-                                
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="text-lg font-[900] tracking-tighter text-slate-900 mb-1 truncate">
-                                        {item.role}
-                                    </h3>
-                                    <div className="flex items-center gap-3 text-slate-400">
-                                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest">
-                                            <PlayCircle size={12} />
-                                            {item.mode}
-                                        </div>
-                                        <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest">
-                                            <Calendar size={12} />
-                                            {new Date(item.createdAt).toLocaleDateString()}
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 transition-all shadow-inner border border-slate-100/50">
+                                        <Target className="text-slate-400 group-hover:text-white transition-colors" size={20} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-base font-extrabold text-slate-900 mb-1 truncate tracking-tight">
+                                            {item.role}
+                                        </h3>
+                                        <div className="flex items-center gap-2 text-slate-400">
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-blue-600">{item.mode}</span>
+                                            <span className="w-1 h-1 rounded-full bg-slate-200" />
+                                            <span className="text-[9px] font-bold uppercase tracking-widest">{new Date(item.createdAt).toLocaleDateString()}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-8 px-4">
-                                    <div className="text-right">
-                                        <p className="text-2xl font-[900] tracking-tighter text-blue-600">
-                                            {Math.round(item.finalScore || 0)}%
+                                <div className="flex items-center justify-between sm:justify-end sm:flex-1 gap-6 pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-50">
+                                    <div className="text-left sm:text-right">
+                                        <p className="text-2xl font-black text-slate-900 tracking-tighter">
+                                            {Math.round(item.finalScore || 0)}<span className="text-xs text-slate-400 ml-0.5">/10</span>
                                         </p>
-                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Score</p>
+                                        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.2em]">Sequence Score</p>
                                     </div>
                                     
-                                    <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
-                                        item.status === "completed"
-                                            ? "bg-emerald-50 text-emerald-600"
-                                            : "bg-amber-50 text-amber-600"
-                                    }`}>
-                                        {item.status}
-                                    </span>
-                                    
-                                    <ChevronRight className="text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" size={20} />
+                                    <div className="flex items-center gap-4">
+                                        <span className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
+                                            item.status === "completed"
+                                                ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                                                : "bg-amber-50 text-amber-600 border-amber-100"
+                                        }`}>
+                                            {item.status}
+                                        </span>
+                                        <ChevronRight className="text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all hidden sm:block" size={18} />
+                                    </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 )}

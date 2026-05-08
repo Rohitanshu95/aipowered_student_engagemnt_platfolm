@@ -32,7 +32,8 @@ const userSchema = new mongoose.Schema({
     profileBrief: String,
     resumeUrl: String,
     resumeText: String,
-    resumeName: String
+    resumeName: String,
+    avatar: String
 
 }, {timestamps:true})
 

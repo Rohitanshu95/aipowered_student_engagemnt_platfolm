@@ -35,6 +35,14 @@ const roadmapSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    totalTasks: {
+        type: Number,
+        default: 0
+    },
+    completedTasks: {
+        type: Number,
+        default: 0
+    },
     status: {
         type: String,
         enum: ["Active", "Completed", "On-Hold"],

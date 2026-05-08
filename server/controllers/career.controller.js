@@ -30,7 +30,9 @@ const extractTextFromPDF = async (filePath) => {
 };
 
 /**
- * ATS Score Checker Logic
+ * Enhanced ATS Score Checker — Full Deep Analysis
+ * Provides section-by-section breakdown, keyword matching against JD,
+ * formatting checks, quantification analysis, and actionable fixes.
  */
 export const checkATS = async (req, res) => {
     try {
@@ -40,6 +42,7 @@ export const checkATS = async (req, res) => {
 
         // 1. Extract text from the saved file
         const resumeText = await extractTextFromPDF(req.file.path);
+        const jobDescription = req.body.jobDescription || "";
 
         // 2. Update User Profile with the permanent resume data
         const resumeUrl = `/uploads/resumes/${req.file.filename}`;
@@ -51,20 +54,100 @@ export const checkATS = async (req, res) => {
         });
 
         const prompt = `
-        You are an expert Applicant Tracking System (ATS) and Senior Technical Recruiter.
-        Analyze the following resume text and provide a detailed ATS score and feedback.
+        You are an expert Applicant Tracking System (ATS) simulator combined with a Senior Technical Recruiter with 15+ years of experience.
+        
+        Perform a COMPREHENSIVE, REAL ATS analysis of the following resume. Simulate how actual ATS software (like Workday, Greenhouse, Lever, Taleo) would parse and score this resume.
 
         RESUME TEXT:
         ${resumeText}
 
+        ${jobDescription ? `TARGET JOB DESCRIPTION:\n${jobDescription}` : "No specific job description provided — analyze against general software engineering / tech industry standards."}
+
+        PERFORM THESE EXACT CHECKS:
+
+        1. **SECTION DETECTION**: Check if these standard resume sections exist and are properly labeled:
+           - Contact Information (name, email, phone, LinkedIn, GitHub/Portfolio)
+           - Professional Summary / Objective
+           - Work Experience / Employment History
+           - Education
+           - Skills / Technical Skills
+           - Projects
+           - Certifications
+           - Achievements / Awards
+
+        2. **FORMATTING & PARSABILITY CHECKS**: Real ATS systems fail on:
+           - Tables, columns, text boxes (cannot parse)
+           - Headers/footers (often skipped by ATS)
+           - Images, icons, graphics (invisible to ATS)
+           - Unusual fonts or special characters
+           - PDF parsability issues
+           - Consistent date formats
+           - Standard section headings vs creative headings
+           - Bullet point usage vs paragraph blocks
+           - File length (1-2 pages ideal)
+
+        3. **KEYWORD ANALYSIS**: ${jobDescription ? "Compare resume keywords against the job description" : "Check for industry-standard keywords"}:
+           - Hard skills (programming languages, frameworks, tools)
+           - Soft skills (leadership, communication, etc.)
+           - Industry-specific terminology
+           - Action verbs usage
+           - Calculate exact keyword match percentage
+
+        4. **CONTENT QUALITY ANALYSIS**:
+           - Quantified achievements (numbers, percentages, metrics)
+           - Action verb strength (led, developed, architected vs helped, worked on)
+           - Relevance of experience
+           - Specificity of descriptions
+           - Impact statements
+
+        5. **COMMON ATS REJECTION REASONS**: Flag if any apply:
+           - Missing contact info
+           - No relevant keywords
+           - Employment gaps
+           - Overuse of graphics/tables
+           - Missing required sections
+           - Too short or too long
+
         RESPONSE FORMAT (Strict JSON):
         {
-            "score": number (0-100),
-            "summary": "Short 2 sentence summary of the profile",
-            "strengths": ["list of 3-4 key strengths"],
-            "weaknesses": ["list of 3-4 critical areas for improvement"],
-            "recommendations": ["step-by-step actionable advice to increase score"],
-            "missingKeywords": ["important tools/skills missing"]
+            "overallScore": number (0-100, be realistic and strict),
+            "verdict": "PASS" | "NEEDS_WORK" | "HIGH_RISK",
+            "verdictMessage": "1-2 sentence verdict explaining if this resume would pass most ATS systems",
+            
+            "sectionScores": {
+                "contactInfo": { "score": number (0-100), "found": boolean, "details": "what was found/missing", "fix": "specific fix if needed" },
+                "summary": { "score": number (0-100), "found": boolean, "details": "analysis", "fix": "specific fix" },
+                "experience": { "score": number (0-100), "found": boolean, "details": "analysis", "fix": "specific fix" },
+                "education": { "score": number (0-100), "found": boolean, "details": "analysis", "fix": "specific fix" },
+                "skills": { "score": number (0-100), "found": boolean, "details": "analysis", "fix": "specific fix" },
+                "projects": { "score": number (0-100), "found": boolean, "details": "analysis", "fix": "specific fix" },
+                "certifications": { "score": number (0-100), "found": boolean, "details": "analysis", "fix": "specific fix" }
+            },
+
+            "formattingChecks": [
+                { "check": "Check name", "status": "pass" | "fail" | "warning", "detail": "explanation" }
+            ],
+
+            "keywordAnalysis": {
+                "matchPercentage": number (0-100),
+                "matchedKeywords": ["list of keywords found in resume that match JD or industry standards"],
+                "missingKeywords": ["critical keywords NOT found in resume"],
+                "suggestedKeywords": ["additional keywords that would strengthen the resume"]
+            },
+
+            "contentQuality": {
+                "quantifiedAchievements": { "count": number, "examples": ["good examples found"], "suggestion": "how to add more" },
+                "actionVerbs": { "strong": ["strong verbs used"], "weak": ["weak verbs that should be replaced"], "suggested": ["better alternatives"] },
+                "impactStatements": number (0-10, how many strong impact statements found)
+            },
+
+            "topIssues": [
+                { "severity": "critical" | "major" | "minor", "issue": "description", "fix": "exact fix to apply" }
+            ],
+
+            "summary": "3-4 sentence executive summary of the resume quality",
+            "strengths": ["list of 4-5 genuine strengths"],
+            "improvements": ["list of 5-6 specific, actionable improvements with exact wording suggestions"]
         }
         `;
 
@@ -119,7 +202,9 @@ export const getDetailedRoadmap = async (req, res) => {
             stackName: role,
             planType,
             syllabus: roadmapData.syllabus,
-            dailyPlan: roadmapData.dailyPlan
+            dailyPlan: roadmapData.dailyPlan,
+            totalTasks: 84, // We always generate 84 days
+            completedTasks: 0
         });
         await newRoadmap.save();
 
@@ -482,20 +567,42 @@ export const getTrendingInternships = async (req, res) => {
 export const updateTaskStatus = async (req, res) => {
     const { taskId, status } = req.body;
     try {
+        // 1. Get current task to know its previous state
+        const oldTask = await UserTask.findOne({ _id: taskId, userId: req.userId });
+        if (!oldTask) return res.status(404).json({ success: false, message: "Task not found." });
+
+        if (oldTask.status === status) {
+            return res.status(200).json({ success: true, task: oldTask });
+        }
+
+        // 2. Update the task
         const task = await UserTask.findOneAndUpdate(
             { _id: taskId, userId: req.userId },
             { status },
-            { returnDocument: "after" }
+            { new: true }
         );
 
         if (task && task.roadmapId) {
-            // Recalculate % for the entire roadmap
-            const allTasks = await UserTask.find({ roadmapId: task.roadmapId });
-            const completedTasks = allTasks.filter(t => t.status === "Completed").length;
-            const progress = Math.round((completedTasks / allTasks.length) * 100);
+            // 3. Update Roadmap counters atomically
+            // If moving to Completed, increment. If moving away from Completed, decrement.
+            let incValue = 0;
+            if (status === "Completed") incValue = 1;
+            else if (oldTask.status === "Completed") incValue = -1;
 
-            await Roadmap.findByIdAndUpdate(task.roadmapId, { progress });
-            return res.status(200).json({ success: true, progress, task });
+            if (incValue !== 0) {
+                const roadmap = await Roadmap.findByIdAndUpdate(
+                    task.roadmapId,
+                    { $inc: { completedTasks: incValue } },
+                    { new: true }
+                );
+
+                // 4. Recalculate progress % locally
+                if (roadmap && roadmap.totalTasks > 0) {
+                    const newProgress = Math.round((roadmap.completedTasks / roadmap.totalTasks) * 100);
+                    await Roadmap.findByIdAndUpdate(task.roadmapId, { progress: newProgress });
+                    return res.status(200).json({ success: true, progress: newProgress, task });
+                }
+            }
         }
 
         res.status(200).json({ success: true, task });

@@ -13,8 +13,17 @@ import taskRouter from "./routes/task.route.js"
 
 const app = express()
 app.use(cors({
-    origin:["http://localhost:5173", "http://127.0.0.1:5173"],
-    credentials:true
+    origin: function (origin, callback) {
+        if (!origin || origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) {
+            callback(null, true);
+        } else {
+            console.log("Blocked by CORS:", origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
 }))
 
 app.use(express.json())

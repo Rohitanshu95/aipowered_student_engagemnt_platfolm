@@ -40,6 +40,8 @@ function App() {
       <Route path='/history' element={<InterviewHistory/>}/>
       <Route path='/pricing' element={<Pricing/>}/>
       <Route path='/report/:id' element={<InterviewReport/>}/>
+      <Route path='/report' element={<InterviewHistory/>}/>
+      <Route path='/profile' element={<Settings/>}/>
       <Route path='/career-suite' element={<CareerSuite/>}/>
       <Route path='/dashboard' element={<DashboardHome/>}/>
       <Route path='/settings' element={<Settings/>}/>
