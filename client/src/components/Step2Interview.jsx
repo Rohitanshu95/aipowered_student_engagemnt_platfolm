@@ -328,12 +328,16 @@ setIsSubmitting(false)
 
 
   return (
-    <div className='min-h-screen bg-linear-to-br from-emerald-50 via-white to-teal-100 flex items-center justify-center p-4 sm:p-6'>
-      <div className='w-full max-w-350 min-h-[80vh] bg-white rounded-3xl shadow-2xl border border-gray-200 flex flex-col lg:flex-row overflow-hidden'>
+    <div className='min-h-screen bg-slate-900 flex items-center justify-center p-0 lg:p-8 overflow-hidden font-sans'>
+      <div className='w-full max-w-[1440px] h-full lg:h-[85vh] bg-slate-900/50 backdrop-blur-3xl rounded-none lg:rounded-[40px] border-none lg:border border-slate-800 flex flex-col lg:flex-row shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-hidden relative'>
+        
+        {/* Background Glows */}
+        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-600/10 blur-[120px] rounded-full pointer-events-none" />
 
-        {/* video section */}
-        <div className='w-full lg:w-[35%] bg-white flex flex-col items-center p-6 space-y-6 border-r border-gray-200'>
-          <div className='w-full max-w-md rounded-2xl overflow-hidden shadow-xl'>
+        {/* LEFT COLUMN: AI AVATAR (30%) */}
+        <div className='w-full lg:w-[32%] bg-slate-900 flex flex-col border-r border-slate-800 relative group'>
+          <div className='flex-1 relative overflow-hidden'>
             <video
               src={videoSource}
               key={videoSource}
@@ -341,115 +345,158 @@ setIsSubmitting(false)
               muted
               playsInline
               preload="auto"
-              className="w-full h-auto object-cover"
+              className="w-full h-full object-cover grayscale-[0.2] transition-all duration-700 group-hover:grayscale-0"
             />
+            {/* Overlay Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80" />
+            
+            {/* Status Indicator */}
+            <div className="absolute top-8 left-8 flex items-center gap-3">
+               <div className={`w-3 h-3 rounded-full ${isAIPlaying ? 'bg-emerald-500 animate-pulse' : 'bg-slate-500'}`} />
+               <span className="text-white text-[10px] font-black uppercase tracking-[0.2em]">{isAIPlaying ? 'AI Speaking' : 'AI Listening'}</span>
+            </div>
           </div>
 
-          {/* subtitle */}
-          {subtitle && (
-            <div className='w-full max-w-md bg-gray-50 border border-gray-200 rounded-xl p-4 shadow-sm'>
-              <p className='text-gray-700 text-sm sm:text-base font-medium text-center leading-relaxed'>{subtitle}</p>
-            </div>
-          )}
-
-
-          {/* timer Area */}
-          <div className='w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-md p-6 space-y-5'>
-            <div className='flex justify-between items-center'>
-              <span className='text-sm text-gray-500'>
-                Interview Status
-              </span>
-              {isAIPlaying && <span className='text-sm font-semibold text-emerald-600'>
-                {isAIPlaying ? "AI Speaking" : ""}
-              </span>}
-            </div>
-
-            <div className="h-px bg-gray-200"></div>
-
-            <div className='flex justify-center'>
-
-              <Timer timeLeft={timeLeft} totalTime={currentQuestion?.timeLimit} />
-            </div>
-
-            <div className="h-px bg-gray-200"></div>
-
-            <div className='grid grid-cols-2 gap-6 text-center'>
-              <div>
-                <span className='text-2xl font-bold text-emerald-600'>{currentIndex + 1}</span>
-                <span className='text-xs text-gray-400'>Current Questions</span>
-              </div>
-
-              <div>
-                <span className='text-2xl font-bold text-emerald-600'>{questions.length}</span>
-                <span className='text-xs text-gray-400'>Total Questions</span>
-              </div>
-            </div>
-
-
+          {/* Subtitles Area */}
+          <div className="p-8 pb-12">
+             <div className="min-h-[80px] bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md">
+                <p className='text-slate-300 text-sm font-medium leading-relaxed italic'>
+                  {subtitle || "The AI is processing the context of your resume..."}
+                </p>
+             </div>
           </div>
         </div>
 
-        {/* Text section */}
+        {/* MIDDLE COLUMN: QUESTION & INPUT (43%) */}
+        <div className='flex-1 flex flex-col relative bg-slate-900/40'>
+           {/* Top Bar */}
+           <div className="p-8 pb-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                 <span className="text-white font-[900] text-lg tracking-tighter">Question {currentIndex + 1} / {questions.length}</span>
+                 <div className="flex gap-2">
+                    <span className="bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-orange-500/20">Medium</span>
+                    <span className="bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-blue-500/20">System Design</span>
+                 </div>
+              </div>
+              <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+                 <Timer timeLeft={timeLeft} totalTime={currentQuestion?.timeLimit} isDark />
+              </div>
+           </div>
 
-        <div className='flex-1 flex flex-col p-4 sm:p-6 md:p-8 relative'>
-          <h2 className='text-xl sm:text-2xl font-bold text-emerald-600 mb-6'>
-            AI Smart Interview
-          </h2>
+           {/* Question Text */}
+           <div className="px-8 pb-12 pt-8 flex-1 flex flex-col">
+              <div className="mb-12">
+                 <h3 className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Challenge</h3>
+                 <p className="text-white text-2xl font-bold leading-tight tracking-tight">
+                    {currentQuestion?.question || "Initializing your mock interview environment..."}
+                 </p>
+              </div>
 
+              {/* Input Area */}
+              <div className="flex-1 flex flex-col relative group">
+                 <textarea
+                   placeholder="Start typing your answer here..."
+                   onChange={(e) => setAnswer(e.target.value)}
+                   value={answer}
+                   className="flex-1 bg-white/[0.03] p-8 rounded-[40px] resize-none outline-none border border-white/5 focus:border-white/20 focus:bg-white/[0.05] transition-all text-white text-lg font-medium leading-relaxed placeholder:text-slate-600 shadow-inner"
+                 />
+                 
+                 {/* Voice Visualizer Mock (only if mic is on) */}
+                 {isMicOn && !isAIPlaying && (
+                    <div className="absolute bottom-8 left-8 flex gap-1 items-end h-8 overflow-hidden">
+                       {[0.4, 0.7, 0.5, 0.9, 0.6, 0.3, 0.8].map((v, i) => (
+                         <motion.div 
+                           key={i}
+                           animate={{ height: [`${v * 10}%`, `${v * 100}%`, `${v * 10}%`] }}
+                           transition={{ duration: 0.5 + Math.random(), repeat: Infinity }}
+                           className="w-1 bg-blue-500 rounded-full"
+                         />
+                       ))}
+                    </div>
+                 )}
+              </div>
+           </div>
 
-          {!isIntroPhase && (<div className='relative mb-6 bg-gray-50 p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-sm'>
-            <p className='text-xs sm:text-sm text-gray-400 mb-2'>
-              Question {currentIndex + 1} of {questions.length}
-            </p>
+           {/* Controls Bar */}
+           <div className="p-8 pt-0 flex gap-4">
+              <motion.button
+                onClick={toggleMic}
+                whileTap={{ scale: 0.9 }}
+                className={`w-14 h-14 flex items-center justify-center rounded-2xl transition-all ${isMicOn ? 'bg-white/5 text-white border border-white/10' : 'bg-rose-500/20 text-rose-500 border border-rose-500/30'}`}>
+                {isMicOn ? <FaMicrophone size={20} /> : <FaMicrophoneSlash size={20}/>}
+              </motion.button>
+              
+              {!feedback ? (
+                <motion.button
+                  onClick={submitAnswer}
+                  disabled={isSubmitting}
+                  whileTap={{ scale: 0.98 }}
+                  className='flex-1 bg-white text-slate-900 py-4 rounded-2xl shadow-xl shadow-white/5 hover:bg-slate-200 transition-all font-black text-xs uppercase tracking-widest disabled:bg-slate-800 disabled:text-slate-500'>
+                  {isSubmitting ? "Processing Insights..." : "Evaluate Answer"}
+                </motion.button>
+              ) : (
+                <motion.button
+                  onClick={handleNext}
+                  whileTap={{ scale: 0.98 }}
+                  className='flex-1 bg-blue-600 text-white py-4 rounded-2xl shadow-xl shadow-blue-500/20 hover:bg-blue-500 transition-all font-black text-xs uppercase tracking-widest'>
+                  Next Challenge
+                </motion.button>
+              )}
+           </div>
+        </div>
 
-            <div className='text-base sm:text-lg font-semibold text-gray-800 leading-relaxed '>{currentQuestion?.question}</div>
-          </div>)
-          }
-          <textarea
-            placeholder="Type your answer here..."
-            onChange={(e) => setAnswer(e.target.value)}
-            value={answer}
-            className="flex-1 bg-gray-100 p-4 sm:p-6 rounded-2xl resize-none outline-none border border-gray-200 focus:ring-2 focus:ring-emerald-500 transition text-gray-800" />
+        {/* RIGHT COLUMN: LIVE FEEDBACK (25%) */}
+        <div className='w-full lg:w-[25%] bg-slate-950/20 border-l border-slate-800 p-8 flex flex-col space-y-12'>
+           <div className="flex items-center justify-between">
+              <h3 className="text-white font-[900] text-sm uppercase tracking-widest">Live Feedback</h3>
+              <div className="bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter border border-emerald-500/20">Active</div>
+           </div>
 
+           {/* Real-time Meters Mockup */}
+           <div className="space-y-10">
+              {[
+                { label: "Communication", value: 78, color: "bg-blue-500" },
+                { label: "Technical Accuracy", value: 82, color: "bg-teal-500" },
+                { label: "Confidence", value: 74, color: "bg-indigo-500" },
+              ].map((meter) => (
+                <div key={meter.label}>
+                   <div className="flex justify-between items-end mb-3">
+                      <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{meter.label}</span>
+                      <span className="text-white font-black text-sm">{meter.value}%</span>
+                   </div>
+                   <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${meter.value}%` }}
+                        className={`h-full ${meter.color} rounded-full`}
+                      />
+                   </div>
+                </div>
+              ))}
 
-         {!feedback ? ( <div className='flex items-center gap-4 mt-6'>
-            <motion.button
-              onClick={toggleMic}
-              whileTap={{ scale: 0.9 }}
-              className='w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-full bg-black text-white shadow-lg'>
-              {isMicOn ? <FaMicrophone size={20} /> : <FaMicrophoneSlash size={20}/>}
-            </motion.button>
+              <div className="pt-6 border-t border-white/5 mt-auto">
+                 <div className="flex justify-between items-center mb-6">
+                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Sentiment</span>
+                    <span className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
+                       Positive <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                    </span>
+                 </div>
+              </div>
+           </div>
 
-            <motion.button
-            onClick={submitAnswer}
-            disabled={isSubmitting}
-              whileTap={{ scale: 0.95 }}
-              className='flex-1 bg-gradient-to-r from-emerald-600 to-teal-500 text-white py-3 sm:py-4 rounded-2xl shadow-lg hover:opacity-90 transition font-semibold disabled:bg-gray-500'>
-              {isSubmitting?"Submitting...":"Submit Answer"}
-
-            </motion.button>
-
-          </div>):(
-            <motion.div 
-             initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            className='mt-6 bg-emerald-50 border border-emerald-200 p-5 rounded-2xl shadow-sm'>
-              <p className='text-emerald-700 font-medium mb-4'>{feedback}</p>
-
-              <button
-              onClick={handleNext}
-
-               className='w-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white py-3 rounded-xl shadow-md hover:opacity-90 transition flex items-center justify-center gap-1'>
-                Next Question <BsArrowRight size={18}/>
+           {/* Finish Button at bottom */}
+           <div className="flex-1 flex flex-col justify-end">
+              <button 
+                onClick={finishInterview}
+                className="w-full py-4 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all shadow-lg shadow-rose-900/10"
+              >
+                End Session
               </button>
-
-            </motion.div>
-          )}
+           </div>
         </div>
       </div>
-
     </div>
-  )
+  );
 }
 
 export default Step2Interview

@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import axios from "axios"
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import axios from "axios";
 import { ServerUrl } from '../App';
 import Step3Report from '../components/Step3Report';
+import DashboardLayout from '../components/DashboardLayout';
+
 function InterviewReport() {
   const {id} = useParams()
   const [report,setReport] = useState(null);
@@ -11,29 +13,29 @@ function InterviewReport() {
     const fetchReport = async () => {
       try {
         const result = await axios.get(ServerUrl + "/api/interview/report/" + id , {withCredentials:true})
-
-        console.log(result.data)
         setReport(result.data)
       } catch (error) {
-        console.log(error)
+        console.error(error)
       }
     }
-
     fetchReport()
-  },[])
+  },[id])
 
-
-    if (!report) {
+  if (!report) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500 text-lg">
-          Loading Report...
-        </p>
-      </div>
+      <DashboardLayout>
+        <div className="h-[60vh] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
     );
   }
 
-  return <Step3Report report={report}/>
+  return (
+    <DashboardLayout>
+      <Step3Report report={report}/>
+    </DashboardLayout>
+  )
 }
 
-export default InterviewReport
+export default InterviewReport;

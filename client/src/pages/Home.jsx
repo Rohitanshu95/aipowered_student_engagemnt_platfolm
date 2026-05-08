@@ -29,7 +29,11 @@ function Home() {
   const navigate = useNavigate();
 
   const handleStart = (tab) => {
-    navigate(`/career-suite?tab=${tab}`);
+    if (userData) {
+      navigate(`/dashboard?tab=${tab}`);
+    } else {
+      navigate('/auth');
+    }
   };
 
   return (

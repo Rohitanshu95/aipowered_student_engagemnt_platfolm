@@ -1,12 +1,12 @@
-import React from 'react'
-import { FaArrowLeft } from 'react-icons/fa';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from "motion/react"
+import { motion } from "framer-motion";
 import { buildStyles, CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import jsPDF from "jspdf"
-import autoTable from "jspdf-autotable"
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { ChevronRight } from 'lucide-react';
 
 function Step3Report({ report }) {
   if (!report) {
@@ -172,25 +172,33 @@ function Step3Report({ report }) {
 };
 
   return (
-    <div className='min-h-screen bg-linear-to-br from-gray-50 to-green-50 px-4 sm:px-6 lg:px-10 py-8'>
-      <div className='mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-        <div className='md:mb-10 w-full flex items-start gap-4 flex-wrap'>
-          <button
-            onClick={() => navigate("/history")}
-            className='mt-1 p-3 rounded-full bg-white shadow hover:shadow-md transition'><FaArrowLeft className='text-gray-600' /></button>
-
-          <div>
-            <h1 className='text-3xl font-bold flex-nowrap text-gray-800'>
-              Interview Analytics Dashboard
-            </h1>
-            <p className='text-gray-500 mt-2'>
-              AI-powered performance insights
-            </p>
-
-          </div>
+    <div className="max-w-6xl mx-auto pb-12">
+      {/* Header section with score overview */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 px-2">
+        <div>
+          <h1 className="text-3xl font-[900] tracking-tighter text-slate-900 mb-2">
+            Interview Analytics
+          </h1>
+          <p className="text-slate-500 font-bold text-sm tracking-tight">
+            AI-powered diagnostics for your professional performance.
+          </p>
         </div>
-
-        <button onClick={downloadPDF} className='bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl shadow-md transition-all duration-300 font-semibold text-sm sm:text-base text-nowrap'>Download PDF</button>
+        
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate("/history")} 
+            className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-slate-600 text-xs font-black uppercase tracking-widest hover:border-blue-100 transition-all flex items-center gap-2"
+          >
+            <ChevronRight className="rotate-180" size={16} />
+            Back to History
+          </button>
+          <button 
+            onClick={downloadPDF} 
+            className="px-8 py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-200"
+          >
+            Download PDF
+          </button>
+        </div>
       </div>
 
 
