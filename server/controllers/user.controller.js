@@ -41,3 +41,18 @@ export const updateAvatar = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to update avatar." });
     }
 };
+
+export const updateProfile = async (req, res) => {
+    try {
+        const { name, profileBrief } = req.body;
+        const user = await User.findByIdAndUpdate(
+            req.userId, 
+            { name, profileBrief },
+            { new: true }
+        );
+        if (!user) return res.status(404).json({ success: false, message: "User not found." });
+        res.status(200).json({ success: true, message: "Profile updated successfully", user });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Failed to update profile." });
+    }
+};

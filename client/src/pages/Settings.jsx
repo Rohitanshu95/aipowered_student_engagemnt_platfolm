@@ -54,7 +54,16 @@ function Settings() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editingBrief, setEditingBrief] = useState(false);
+  const [profileBrief, setProfileBrief] = useState(userData?.profileBrief || "");
+  const [showPlanModal, setShowPlanModal] = useState(false);
   const fileInputRef = useRef(null);
+
+  const plans = [
+    { id: 'basic', name: 'Starter Pack', credits: 500, price: 49, icon: Zap },
+    { id: 'pro', name: 'Professional', credits: 1500, price: 99, icon: ShieldCheck, popular: true },
+    { id: 'elite', name: 'Elite Performance', credits: 4000, price: 199, icon: Sparkles }
+  ];
 
   const handleAvatarUpload = async (e) => {
     const file = e.target.files[0];
@@ -75,9 +84,76 @@ function Settings() {
       }
     } catch (err) {
       console.error("Avatar upload failed:", err);
-      alert("Failed to upload avatar. Please try again.");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.post(`${ServerUrl}/api/user/update-profile`, {
+        name: userData.name,
+        profileBrief
+      }, { withCredentials: true });
+
+      if (res.data.success) {
+        dispatch(setUserData(res.data.user));
+        setEditingBrief(false);
+      }
+    } catch (err) {
+      console.error("Profile update failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBuyCredits = async (plan) => {
+    try {
+      setLoading(true);
+      const { data: order } = await axios.post(`${ServerUrl}/api/payment/order`, {
+        planId: plan.id,
+        amount: plan.price,
+        credits: plan.credits
+      }, { withCredentials: true });
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "InterviewIQ.AI",
+        description: `Purchase ${plan.credits} Credits`,
+        order_id: order.id,
+        handler: async (response) => {
+          try {
+            const { data } = await axios.post(`${ServerUrl}/api/payment/verify`, response, { withCredentials: true });
+            if (data.success) {
+              dispatch(setUserData(data.user));
+              setShowPlanModal(false);
+              alert("Credits added successfully!");
+            }
+          } catch (err) {
+            console.error("Verification failed:", err);
+          }
+        },
+        prefill: {
+          name: userData?.name,
+          email: userData?.email
+        },
+        theme: { color: "#2563eb" }
+      };
+
+      if (!window.Razorpay) {
+        alert("Razorpay SDK failed to load. Please check your internet connection.");
+        return;
+      }
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error("Payment failed:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,7 +172,7 @@ function Settings() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto px-4 md:px-0">
         <header className="mb-12">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
@@ -153,7 +229,7 @@ function Settings() {
               <p className="text-slate-400 font-bold text-sm tracking-tight mb-4">{userData?.email}</p>
               <div className="flex flex-wrap justify-center md:justify-start gap-3">
                 <span className="px-4 py-1.5 bg-blue-600/20 text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-widest border border-blue-600/30">
-                  Free Member
+                  {userData?.credits > 1000 ? "Pro Tier" : "Free Member"}
                 </span>
                 <span className="px-4 py-1.5 bg-emerald-600/20 text-emerald-400 rounded-full text-[10px] font-bold uppercase tracking-widest border border-emerald-600/30">
                   Account Verified
@@ -166,21 +242,54 @@ function Settings() {
         <SettingsSection title="Profile Information" icon={User}>
           <SettingItem label="Full Name" value={userData?.name} />
           <SettingItem label="Email Address" value={userData?.email} />
-          <SettingItem label="Professional Brief" value={userData?.profileBrief || 'Add a short brief to help AI tailor your interviews'} readOnly={false} />
+          <div className="py-4 space-y-4">
+            <div className="flex justify-between items-start">
+              <div className="space-y-0.5">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Professional Brief</p>
+                {!editingBrief ? (
+                  <p className="text-sm font-bold text-slate-900 tracking-tight leading-relaxed max-w-xl">
+                    {userData?.profileBrief || 'Add a short brief to help AI tailor your interviews'}
+                  </p>
+                ) : (
+                  <textarea 
+                    value={profileBrief}
+                    onChange={(e) => setProfileBrief(e.target.value)}
+                    className="w-full mt-2 p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    rows={4}
+                    placeholder="Describe your background, skills, and goals..."
+                  />
+                )}
+              </div>
+              <button 
+                onClick={() => editingBrief ? handleUpdateProfile() : setEditingBrief(true)}
+                disabled={loading}
+                className="text-blue-600 font-black text-[10px] uppercase tracking-widest hover:text-blue-700 transition-colors"
+              >
+                {editingBrief ? (loading ? 'Saving...' : 'Save Changes') : 'Edit Info'}
+              </button>
+            </div>
+          </div>
         </SettingsSection>
 
         <SettingsSection title="Account & Credits" icon={CreditCard}>
-          <div className="flex items-center justify-between p-6 bg-slate-50 rounded-2xl border border-slate-100">
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Available Credits</p>
-              <p className="text-3xl font-[900] text-slate-900 tracking-tighter">{userData?.credits || 0} Points</p>
+          <div className="flex items-center justify-between p-8 bg-blue-600 rounded-[32px] text-white shadow-xl shadow-blue-100 relative overflow-hidden">
+            <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
+            <div className="relative">
+              <p className="text-[10px] font-black text-blue-100 uppercase tracking-[0.2em] mb-2">Available Credits</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-5xl font-[900] tracking-tighter">{userData?.credits || 0}</p>
+                <p className="text-xs font-black uppercase text-blue-100">Points</p>
+              </div>
             </div>
-            <button className="px-8 py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-200">
-              Buy Credits
+            <button 
+              onClick={() => setShowPlanModal(true)}
+              className="relative px-8 py-4 bg-white text-blue-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-xl"
+            >
+              Add Credits
             </button>
           </div>
-          <SettingItem label="Current Plan" value="Explorer (Free)" />
-          <SettingItem label="Last Transaction" value="None" />
+          <SettingItem label="Usage Efficiency" value={`${userData?.credits > 0 ? "Optimized" : "Low"}`} />
+          <SettingItem label="Last Credit Injection" value={userData?.lastPurchase || "N/A"} />
         </SettingsSection>
 
         <SettingsSection title="Preferences" icon={Globe}>
@@ -214,6 +323,50 @@ function Settings() {
           InterviewIQ v1.0.4 • 2026 Edition
         </div>
       </div>
+
+      {/* Plans Modal */}
+      {showPlanModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] flex items-center justify-center p-6">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white w-full max-w-2xl rounded-[48px] p-10 relative overflow-hidden"
+          >
+            <button 
+              onClick={() => setShowPlanModal(false)}
+              className="absolute top-8 right-8 text-slate-400 hover:text-slate-900"
+            >
+              <ChevronRight className="rotate-90" />
+            </button>
+            <div className="mb-10 text-center">
+              <h2 className="text-3xl font-[900] tracking-tighter text-slate-900 mb-2">Fuel Your Progress.</h2>
+              <p className="text-slate-500 font-bold text-sm tracking-tight">Select a credit injection plan to unlock more AI features.</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {plans.map((plan) => (
+                <div 
+                  key={plan.id}
+                  className={`p-6 rounded-[32px] border-2 transition-all cursor-pointer hover:scale-[1.02] ${plan.popular ? 'border-blue-600 bg-blue-50/30' : 'border-slate-50 bg-slate-50/50'}`}
+                  onClick={() => handleBuyCredits(plan)}
+                >
+                  <div className={`p-3 rounded-2xl w-fit mb-6 ${plan.popular ? 'bg-blue-600 text-white' : 'bg-white text-slate-900'}`}>
+                    <plan.icon size={20} />
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900 uppercase tracking-widest mb-1">{plan.name}</h4>
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="text-2xl font-black text-slate-900 tracking-tighter">₹{plan.price}</span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-500 mb-6">{plan.credits} AI Credits</p>
+                  <button className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${plan.popular ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white text-slate-900 border border-slate-100'}`}>
+                    Choose Plan
+                  </button>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

@@ -506,16 +506,13 @@ export const getAnalytics = async (req, res) => {
     atsScore = `${profilePoints}%`;
 
     // ============ 3. ASSESSMENTS (REAL) ============
-    const assessments = await Assessment.find({ userId: req.userId, status: "Completed" }).sort({ createdAt: -1 });
     const totalAssessments = assessments.length;
     const avgAssessmentScore = totalAssessments > 0
       ? Math.round(assessments.reduce((acc, a) => acc + ((a.score / a.totalQuestions) * 100), 0) / totalAssessments)
       : 0;
 
     // ============ 4. ROADMAP PROGRESS (REAL) ============
-    const roadmaps = await Roadmap.find({ userId: req.userId });
     const activeRoadmaps = roadmaps.filter(r => r.status === "Active").length;
-    const allTasks = await UserTask.find({ userId: req.userId });
     const completedTasks = allTasks.filter(t => t.status === "Completed").length;
     const totalTasks = allTasks.length;
     const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;

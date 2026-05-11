@@ -2,8 +2,7 @@ import React from 'react'
 import { BsRobot } from "react-icons/bs";
 import { motion } from "motion/react"
 import { FcGoogle } from "react-icons/fc";
-import { signInWithPopup } from 'firebase/auth';
-import { auth, provider } from '../utils/firebase';
+import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { ServerUrl } from '../App';
 import { useDispatch } from 'react-redux';
@@ -16,20 +15,15 @@ function Auth({isModel = false}) {
     const dispatch = useDispatch()
     const navigate = useNavigate();
 
-
-
-    const handleGoogleAuth = async () => {
-        try {
-            console.log("Initiating Google Auth Popup...");
-            const result = await signInWithPopup(auth, provider);
-            
-            if (result.user) {
-                const { displayName: name, email } = result.user;
-                console.log(`Auth Success: ${email}. Sending to backend...`);
+    const login = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                console.log("Google Auth Success. Token received. Sending to backend...");
+                const { access_token } = tokenResponse;
                 
                 const backendResult = await axios.post(
                     ServerUrl + "/api/auth/google", 
-                    { name, email }, 
+                    { token: access_token }, 
                     { withCredentials: true }
                 );
                 
@@ -39,11 +33,20 @@ function Auth({isModel = false}) {
                 if (!isModel) {
                     navigate('/');
                 }
+            } catch (error) {
+                console.error("Backend Auth Error:", error);
+                dispatch(setUserData(null));
             }
-        } catch (error) {
-            console.error("Google Auth Error Detail:", error);
+        },
+        onError: (error) => {
+            console.error("Google Login Failed:", error);
             dispatch(setUserData(null));
         }
+    });
+
+    const handleGoogleAuth = () => {
+        console.log("Initiating Google Auth...");
+        login();
     }
 
   return (

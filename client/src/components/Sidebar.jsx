@@ -154,7 +154,10 @@ function Sidebar({ isOpen, setIsOpen }) {
           <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
             <p className="text-slate-900 font-bold text-xs mb-1">Upgrade to Pro</p>
             <p className="text-slate-500 text-[11px] mb-4 leading-relaxed">Access advanced AI insights and priority processing.</p>
-            <button className="w-full py-2.5 bg-white border border-slate-200 text-slate-900 rounded-lg text-xs font-bold hover:bg-slate-50 transition-colors">
+            <button 
+              onClick={() => navigate('/pricing')}
+              className="w-full py-2.5 bg-white border border-slate-200 text-slate-900 rounded-lg text-xs font-bold hover:bg-slate-50 transition-colors"
+            >
               View Plans
             </button>
           </div>
