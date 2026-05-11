@@ -13,14 +13,7 @@ import taskRouter from "./routes/task.route.js"
 
 const app = express()
 app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) {
-            callback(null, true);
-        } else {
-            console.log("Blocked by CORS:", origin);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: "https://aipowered-student-engagemnt-platfol-pied.vercel.app",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
@@ -29,6 +22,7 @@ app.use(cors({
 app.use(express.json())
 app.use(cookieParser())
 app.use("/uploads", express.static("uploads"))
+
 
 app.use("/api/auth" , authRouter)
 app.use("/api/user", userRouter)
@@ -42,3 +36,5 @@ app.listen(PORT , ()=>{
     console.log(`Server running on port ${PORT}`)
     connectDb()
 })
+
+export default app

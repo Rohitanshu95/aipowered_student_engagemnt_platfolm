@@ -14,7 +14,7 @@ import CareerSuite from './pages/CareerSuite'
 import DashboardHome from './pages/DashboardHome'
 import Settings from './pages/Settings'
 
-export const ServerUrl  = "http://localhost:8000"
+export const ServerUrl  = "https://aipowered-student-engagemnt-platfol-pied-backend.vercel.app/"
 
 function App() {
 
