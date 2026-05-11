@@ -19,6 +19,25 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
 }))
 
+let isConnected = false;
+
+const connectInServer = async () => {
+  try {
+    await connectDb();
+    console.log("Database connected successfully");
+    isConnected = true;
+  } catch (error) {
+    console.error("Database connection failed:", error);
+  }
+};
+
+app.use(async (req, res, next) => {
+  if (!isConnected) {
+    await connectInServer();
+  }
+  next();
+});
+
 app.use(express.json())
 app.use(cookieParser())
 app.use("/uploads", express.static("uploads"))
@@ -34,7 +53,6 @@ app.use("/api/task", taskRouter)
 const PORT = process.env.PORT || 6000
 app.listen(PORT , ()=>{
     console.log(`Server running on port ${PORT}`)
-    connectDb()
 })
 
 export default app
